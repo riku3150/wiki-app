@@ -1,0 +1,41 @@
+// 1. ジェネレーターの設定
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 3. Wikiページの定義
+model WikiPage {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  body        String    @db.Text
+  tags        String    @default("") // ← 【今回追加】タグをカンマ区切りの文字列で保存します
+  parentId    String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String
+
+  editingBy   String?
+  editingAt   DateTime?
+
+  parent      WikiPage?  @relation("PageHierarchy", fields: [parentId], references: [id])
+  children    WikiPage[] @relation("PageHierarchy")
+  links       PageLink[] 
+}
+
+// 4. リンクの定義
+model PageLink {
+  id           String   @id @default(uuid())
+  fromPageId   String
+  targetSlug   String
+  
+  fromPage     WikiPage @relation(fields: [fromPageId], references: [id], onDelete: Cascade)
+
+  @@index([fromPageId])
+}
