@@ -84,10 +84,10 @@ export default async function EditPage({
           <label htmlFor="body" className="block text-sm font-medium mb-2">
             内容
           </label>
-          {/* defaultValueに既存のbody（HTML文字列）を渡すことで、
-             編集画面を開いたときに以前の内容が表示されます。
+          {/* ここを defaultValue から initialContent に修正しました！
+              これでエディタに正しく過去のデータが渡ります。
           */}
-          <RichTextEditor defaultValue={page.body} />
+          <RichTextEditor initialContent={page.body} />
         </div>
 
         <div className="flex justify-end gap-4 pt-4 border-t">

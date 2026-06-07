@@ -10,10 +10,11 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@blocknote/core": "^0.50.0",
-    "@blocknote/mantine": "^0.50.0",
-    "@blocknote/react": "^0.50.0",
+    "@blocknote/core": "^0.51.2",
+    "@blocknote/mantine": "^0.51.2",
+    "@blocknote/react": "^0.51.2",
     "@prisma/client": "^6.2.1",
+    "@supabase/supabase-js": "^2.106.1",
     "dotenv": "^17.4.2",
     "next": "16.2.4",
     "react": "19.2.4",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

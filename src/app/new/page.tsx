@@ -1,8 +1,12 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-// 先ほど作成したリッチテキストエディタをインポートします
+// キャッシュをリセットするための機能をインポートします
+import { revalidatePath } from 'next/cache'
 import RichTextEditor from '@/components/RichTextEditor'
+
+// この1行を追加することで、Next.jsに「毎回必ず最新のデータを取得する（キャッシュしない）」ように強制します
+export const dynamic = 'force-dynamic'
 
 export default async function NewPage() {
   const allPages = await prisma.wikiPage.findMany({
@@ -14,7 +18,7 @@ export default async function NewPage() {
     'use server'
 
     const title = formData.get('title') as string
-    const body = formData.get('body') as string // エディタからHTML形式で届きます
+    const body = formData.get('body') as string 
     const parentId = formData.get('parentId') as string
     const tags = formData.get('tags') as string || ''
     
@@ -30,6 +34,10 @@ export default async function NewPage() {
         parentId: parentId !== '' ? parentId : null,
       },
     })
+
+    // ページ一覧やトップページのキャッシュ（古い記憶）を削除して、最新状態にリセットします
+    revalidatePath('/')
+    revalidatePath('/new')
 
     redirect('/')
   }

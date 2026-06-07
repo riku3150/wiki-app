@@ -1,8 +1,19 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-/* 
-  デフォルトで入っていた、メディアクエリ（@media (prefers-color-scheme: dark)）などを
-  すべて削除することで、OSの設定に引っ張られず、常に白い画面（ライトモード）になります。
-*/
+/* BlockNote(Mantine版)の数字リストがTailwind環境で消える問題の修正パッチ */
+.bn-block-group {
+  counter-reset: bn-counter !important;
+}
+
+.bn-block-content[data-content-type="numberedListItem"] {
+  counter-increment: bn-counter !important;
+}
+
+.bn-block-content[data-content-type="numberedListItem"]::before {
+  content: counter(bn-counter) ". " !important;
+}
+
+/* BlockNoteを綺麗に表示するための公式スタイルを読み込む */
+@import "@blocknote/core/fonts/inter.css";
+@import "@blocknote/react/style.css";

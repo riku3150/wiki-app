@@ -63,7 +63,7 @@ export default async function ViewPage({
         <header className="mb-8 border-b border-gray-300 pb-4">
           <h1 className="text-4xl font-bold mb-3 text-slate-800">{page.title}</h1>
           
-          {/* 原因の可能性が高い trim() を削除し、安全な処理に変更しました */}
+          {/* タグを安全に表示するための処理 */}
           {page.tags && typeof page.tags === 'string' && (
             <div className="mb-4 flex flex-wrap gap-2">
               {page.tags.split(',').filter(t => t).map((tag, index) => (
@@ -81,6 +81,9 @@ export default async function ViewPage({
           </div>
         </header>
 
+        {/* ここがポイントです。Tailwindの装飾は外し、
+          BlockNoteRendererが自分自身で綺麗に表示するのを妨げないようにします。
+        */}
         <div className="min-h-[200px]">
           <BlockNoteRenderer body={page.body} />
         </div>
