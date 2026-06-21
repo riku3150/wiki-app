@@ -1,8 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-// 新しいリッチテキストエディタをインポート
 import RichTextEditor from '@/components/RichTextEditor'
+import SubmitButton from '@/components/SubmitButton'
 
 export default async function EditPage({ 
   params 
@@ -25,7 +25,7 @@ export default async function EditPage({
     'use server'
 
     const title = formData.get('title') as string
-    const body = formData.get('body') as string // リッチテキストのHTMLを受け取ります
+    const body = formData.get('body') as string
     const tags = formData.get('tags') as string || ''
 
     await prisma.wikiPage.update({
@@ -84,19 +84,12 @@ export default async function EditPage({
           <label htmlFor="body" className="block text-sm font-medium mb-2">
             内容
           </label>
-          {/* ここを defaultValue から initialContent に修正しました！
-              これでエディタに正しく過去のデータが渡ります。
-          */}
           <RichTextEditor initialContent={page.body} />
         </div>
 
         <div className="flex justify-end gap-4 pt-4 border-t">
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md transition font-bold"
-          >
-            更新を保存
-          </button>
+          {/* 元々の button タグを、先ほど作成したローディング機能付きの SubmitButton に差し替えました */}
+          <SubmitButton />
         </div>
       </form>
     </main>

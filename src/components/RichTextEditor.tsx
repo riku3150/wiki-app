@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { BlockNoteView } from '@blocknote/mantine'
 import { useCreateBlockNote } from '@blocknote/react'
-// エラーの原因だった古いインポートを、以下の正しいパスに修正しました
 import * as locales from '@blocknote/core/locales'
 import '@blocknote/core/fonts/inter.css'
 import '@blocknote/mantine/style.css'
@@ -61,7 +60,7 @@ export default function RichTextEditor({ initialContent }: { initialContent?: st
   }, [editor, initialContent])
 
   return (
-    <div className="border border-gray-300 rounded-md bg-white min-h-[400px] py-4">
+    <div className="border border-gray-300 rounded-md bg-white min-h-[400px] py-4 [&_a]:text-blue-600 [&_a]:underline [&_a]:cursor-pointer hover:[&_a]:text-blue-800">
       {/* この隠しinputが、フォーム送信時に「name="body"」としてデータを送る役割を果たします */}
       <input type="hidden" name="body" value={content} />
       
