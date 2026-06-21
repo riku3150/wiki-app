@@ -89,6 +89,15 @@ export default function DrawerMenu({ user, role, handleLogout }: DrawerMenuProps
                 📝 新規作成
               </Link>
               
+              {/* ✨ 新しく追加：AIチャットへのリンク */}
+              <Link 
+                href="/chat" 
+                onClick={() => setIsOpen(false)}
+                className="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 hover:bg-gray-50 rounded-md transition"
+              >
+                🤖 AIチャット
+              </Link>
+              
               {/* ヘッダーから引っ越してきた管理画面へのリンク */}
               {(role === 'creator' || role === 'admin') && (
                 <Link 

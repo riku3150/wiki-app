@@ -1,18 +1,23 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-// キャッシュをリセットするための機能をインポートします
 import { revalidatePath } from 'next/cache'
 import RichTextEditor from '@/components/RichTextEditor'
-// 先ほど作成したAI用データ保存関数をインポートします
 import { generateAndSaveEmbedding } from '@/lib/ai'
-// くるくる（ローディング）付きのボタンをインポートします
 import SubmitButton from '@/components/SubmitButton'
 
-// この1行を追加することで、Next.jsに「毎回必ず最新のデータを取得する（キャッシュしない）」ように強制します
 export const dynamic = 'force-dynamic'
 
-export default async function NewPage() {
+export default async function NewPage({
+  searchParams,
+}: {
+  // Next.js 15以降の仕様に合わせて、searchParamsをPromiseとして受け取ります
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  // URLのパラメータ（?parentId=...）を取得して、初期値として設定します
+  const resolvedSearchParams = await searchParams
+  const defaultParentId = typeof resolvedSearchParams.parentId === 'string' ? resolvedSearchParams.parentId : ''
+
   const allPages = await prisma.wikiPage.findMany({
     select: { id: true, title: true },
     orderBy: { title: 'asc' },
@@ -28,7 +33,6 @@ export default async function NewPage() {
     
     const slug = encodeURIComponent(title.toLowerCase().replace(/ /g, '-'))
 
-    // 作成された記事のIDを取得するため、戻り値を変数（newPage）に受け取ります
     const newPage = await prisma.wikiPage.create({
       data: {
         title,
@@ -40,11 +44,9 @@ export default async function NewPage() {
       },
     })
 
-    // 新しく作られた記事のタイトルと中身を合わせて、AI用のベクトルデータを生成・保存します
     const aiContent = `タイトル: ${title}\n内容: ${body}`
     await generateAndSaveEmbedding(newPage.id, aiContent)
 
-    // ページ一覧やトップページのキャッシュ（古い記憶）を削除して、最新状態にリセットします
     revalidatePath('/')
     revalidatePath('/new')
 
@@ -97,6 +99,7 @@ export default async function NewPage() {
           <select
             id="parentId"
             name="parentId"
+            defaultValue={defaultParentId}
             className="w-full p-2 border border-gray-300 rounded-md bg-transparent"
           >
             <option value="">なし（最上位ページにする）</option>
@@ -116,7 +119,6 @@ export default async function NewPage() {
         </div>
 
         <div className="flex justify-end pt-4 border-t">
-          {/* ここを SubmitButton に置き換えました！ */}
           <SubmitButton />
         </div>
       </form>
