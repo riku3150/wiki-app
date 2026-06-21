@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import RichTextEditor from '@/components/RichTextEditor'
 import SubmitButton from '@/components/SubmitButton'
+// 変更ポイント1: AI用データ保存関数をインポートします
+import { generateAndSaveEmbedding } from '@/lib/ai'
 
 export default async function EditPage({ 
   params 
@@ -37,6 +39,10 @@ export default async function EditPage({
         updatedBy: 'Riku',
       },
     })
+
+    // 変更ポイント2: 更新された記事のタイトルと中身を合わせて、AI用のベクトルデータを上書き保存します
+    const aiContent = `タイトル: ${title}\n内容: ${body}`
+    await generateAndSaveEmbedding(page!.id, aiContent)
 
     redirect(`/page/${page!.slug}`)
   }

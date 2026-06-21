@@ -13,6 +13,7 @@
     "@blocknote/core": "^0.51.2",
     "@blocknote/mantine": "^0.51.2",
     "@blocknote/react": "^0.51.2",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.2.1",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",

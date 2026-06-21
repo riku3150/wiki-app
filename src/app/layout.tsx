@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header'
+import ChatWidget from '@/components/ChatWidget'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,13 +19,16 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={inter.className}>
-        {/* 新しくなったヘッダー（この中にメニューボタンも含まれています！） */}
+        {/* ヘッダー（メニューボタンを含む） */}
         <Header />
         
         {/* 各ページのコンテンツが入るエリア */}
         <div className="min-h-screen bg-gray-50">
           {children}
         </div>
+
+        {/* 🤖 右下に浮いているAIチャットウィジェットを追加！ */}
+        <ChatWidget />
       </body>
     </html>
   )

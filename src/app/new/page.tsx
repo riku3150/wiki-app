@@ -4,6 +4,10 @@ import { prisma } from '@/lib/prisma'
 // キャッシュをリセットするための機能をインポートします
 import { revalidatePath } from 'next/cache'
 import RichTextEditor from '@/components/RichTextEditor'
+// 先ほど作成したAI用データ保存関数をインポートします
+import { generateAndSaveEmbedding } from '@/lib/ai'
+// くるくる（ローディング）付きのボタンをインポートします
+import SubmitButton from '@/components/SubmitButton'
 
 // この1行を追加することで、Next.jsに「毎回必ず最新のデータを取得する（キャッシュしない）」ように強制します
 export const dynamic = 'force-dynamic'
@@ -24,7 +28,8 @@ export default async function NewPage() {
     
     const slug = encodeURIComponent(title.toLowerCase().replace(/ /g, '-'))
 
-    await prisma.wikiPage.create({
+    // 作成された記事のIDを取得するため、戻り値を変数（newPage）に受け取ります
+    const newPage = await prisma.wikiPage.create({
       data: {
         title,
         body,
@@ -34,6 +39,10 @@ export default async function NewPage() {
         parentId: parentId !== '' ? parentId : null,
       },
     })
+
+    // 新しく作られた記事のタイトルと中身を合わせて、AI用のベクトルデータを生成・保存します
+    const aiContent = `タイトル: ${title}\n内容: ${body}`
+    await generateAndSaveEmbedding(newPage.id, aiContent)
 
     // ページ一覧やトップページのキャッシュ（古い記憶）を削除して、最新状態にリセットします
     revalidatePath('/')
@@ -103,19 +112,12 @@ export default async function NewPage() {
           <label htmlFor="body" className="block text-sm font-medium mb-2">
             内容
           </label>
-          {/* MarkdownEditorからRichTextEditorに置き換えました。
-            これでWordのような「見たまま」の編集が可能になります。
-          */}
           <RichTextEditor />
         </div>
 
         <div className="flex justify-end pt-4 border-t">
-          <button
-            type="submit"
-            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-md transition font-bold"
-          >
-            Wikiを保存する
-          </button>
+          {/* ここを SubmitButton に置き換えました！ */}
+          <SubmitButton />
         </div>
       </form>
     </main>
