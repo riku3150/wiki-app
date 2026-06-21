@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     // --------------------------------------------------------
-    // 3. Geminiの文章作成モデルに情報を渡して回答をもらう
+    // 3. 複数のモデルを自動で切り替えて回答を生成する（フォールバック機能）
     // --------------------------------------------------------
     const prompt = `あなたは社内（プライベート）Wikiアプリの優秀なAIアシスタントです。
 以下の「Wikiの参考情報」を元に、ユーザーの「質問」に丁寧に答えてください。
@@ -64,32 +64,60 @@ ${contextText}
 ${message}
 `
 
-    // 💡修正ポイント：モデル名を最新の「gemini-2.0-flash」に変更しました
-    const generateResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
+    // 💡修正ポイント：優先的に試すモデルのリスト（上から順に実行します）
+    const modelsToTry = [
+      'gemini-1.5-pro-latest',   // 本命：高機能で無料枠も安定しているモデル
+      'gemini-1.5-flash-latest', // 代替1：高速なモデル
+      'gemini-pro'               // 最終手段：古いが絶対に動く基礎モデル
+    ]
+
+    let answer = ''
+    let lastError = ''
+
+    // リストのモデルを上から順番に試していくループ
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`モデル ${modelName} を試行中...`)
+        
+        const generateResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+            }),
+          }
+        )
+
+        // APIからの返答がエラーだった場合は、このループ内の処理を中断してcatchへ飛ぶ
+        if (!generateResponse.ok) {
+          const errorText = await generateResponse.text()
+          throw new Error(`HTTPエラー: ${generateResponse.status} - ${errorText}`)
+        }
+
+        const generateData = await generateResponse.json()
+        
+        if (!generateData.candidates || generateData.candidates.length === 0) {
+          throw new Error('回答が空っぽでした')
+        }
+
+        // 無事に回答が取得できたら、変数に保存してループを強制終了（成功！）
+        answer = generateData.candidates[0].content.parts[0].text
+        console.log(`✨ モデル ${modelName} で回答の生成に成功しました！`)
+        break 
+
+      } catch (error: any) {
+        // エラーが出てもアプリは落とさず、警告だけ残して次のモデルを試す
+        console.warn(`⚠️ モデル ${modelName} は失敗しました:`, error.message)
+        lastError = error.message
       }
-    )
-
-    if (!generateResponse.ok) {
-      const errorText = await generateResponse.text()
-      console.error('Gemini Generation Error:', errorText)
-      throw new Error(`AI回答エラー: ${generateResponse.status} - ${errorText}`)
     }
 
-    const generateData = await generateResponse.json()
-    
-    // 安全対策: AIからの回答が空っぽだった場合の処理
-    if (!generateData.candidates || generateData.candidates.length === 0) {
-      throw new Error('AIが回答を生成できませんでした（ポリシー制限などの可能性があります）')
+    // 全てのモデルを試してもダメだった場合のみ、最終的なエラーを画面に返す
+    if (!answer) {
+      throw new Error(`すべてのAIモデルが利用できませんでした。最後のエラー: ${lastError}`)
     }
-
-    const answer = generateData.candidates[0].content.parts[0].text
 
     // 作成された回答をフロントエンド（画面）に返す
     return NextResponse.json({ answer })
