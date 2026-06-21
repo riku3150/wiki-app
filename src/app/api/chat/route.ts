@@ -27,7 +27,8 @@ export async function POST(req: Request) {
     )
 
     if (!embedResponse.ok) {
-      throw new Error('質問のベクトル化に失敗しました')
+      const errText = await embedResponse.text()
+      throw new Error(`ベクトル変換エラー: ${embedResponse.status} - ${errText}`)
     }
 
     const embedData = await embedResponse.json()
@@ -37,8 +38,6 @@ export async function POST(req: Request) {
     // --------------------------------------------------------
     // 2. データベース（pgvector）から、質問に似ているWiki記事を探す
     // --------------------------------------------------------
-    // 以前SQLで作成した match_wiki_pages 関数を呼び出します
-    // しきい値0.3（30%以上の一致）で、最大3件の関連データを取得します
     const matches: any[] = await prisma.$queryRaw`
       SELECT * FROM match_wiki_pages(${embeddingString}::vector, 0.3, 3)
     `
@@ -47,14 +46,12 @@ export async function POST(req: Request) {
     let contextText = ''
     if (matches && matches.length > 0) {
       contextText = matches.map((match) => match.content).join('\n\n---\n\n')
-      console.log(`関連するWiki記事を ${matches.length} 件見つけました！`)
     } else {
       contextText = '関連するWiki記事は見つかりませんでした。'
-      console.log('関連するWiki記事は見つかりませんでした。')
     }
 
     // --------------------------------------------------------
-    // 3. Geminiの文章作成モデル（1.5 Flash）に情報を渡して回答をもらう
+    // 3. Geminiの文章作成モデルに情報を渡して回答をもらう
     // --------------------------------------------------------
     const prompt = `あなたは社内（プライベート）Wikiアプリの優秀なAIアシスタントです。
 以下の「Wikiの参考情報」を元に、ユーザーの「質問」に丁寧に答えてください。
@@ -78,11 +75,20 @@ ${message}
       }
     )
 
+    // 💡修正ポイント：Googleからの詳しいエラー理由をそのまま投げ返すようにしました
     if (!generateResponse.ok) {
-      throw new Error('回答の生成に失敗しました')
+      const errorText = await generateResponse.text()
+      console.error('Gemini Generation Error:', errorText)
+      throw new Error(`AI回答エラー: ${generateResponse.status} - ${errorText}`)
     }
 
     const generateData = await generateResponse.json()
+    
+    // 安全対策: AIからの回答が空っぽだった場合の処理
+    if (!generateData.candidates || generateData.candidates.length === 0) {
+      throw new Error('AIが回答を生成できませんでした（ポリシー制限などの可能性があります）')
+    }
+
     const answer = generateData.candidates[0].content.parts[0].text
 
     // 作成された回答をフロントエンド（画面）に返す
