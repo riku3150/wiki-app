@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     // --------------------------------------------------------
-    // 3. 複数のモデルを自動で切り替えて回答を生成する（フォールバック機能）
+    // 3. ★究極進化★ 利用可能なモデルをGoogleから直接取得して自動選択する
     // --------------------------------------------------------
     const prompt = `あなたは社内（プライベート）Wikiアプリの優秀なAIアシスタントです。
 以下の「Wikiの参考情報」を元に、ユーザーの「質問」に丁寧に答えてください。
@@ -64,18 +64,28 @@ ${contextText}
 ${message}
 `
 
-    // 💡修正ポイント：優先的に試すモデルのリスト（上から順に実行します）
-    const modelsToTry = [
-      'gemini-1.5-pro-latest',   // 本命：高機能で無料枠も安定しているモデル
-      'gemini-1.5-flash-latest', // 代替1：高速なモデル
-      'gemini-pro'               // 最終手段：古いが絶対に動く基礎モデル
-    ]
+    // まず、現在のAPIキーでアクセスできるモデルの一覧をGoogleから取得する
+    const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`)
+    if (!modelsRes.ok) {
+      throw new Error('利用可能なモデル一覧の取得に失敗しました')
+    }
+    const modelsData = await modelsRes.json()
+
+    // 取得した一覧の中から「文章生成（generateContent）」に対応しているモデルの名前だけを抽出
+    const availableModels = modelsData.models
+      .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+      .map((m: any) => m.name.replace('models/', ''))
+
+    console.log('APIキーで利用可能なモデル一覧:', availableModels)
 
     let answer = ''
     let lastError = ''
 
-    // リストのモデルを上から順番に試していくループ
-    for (const modelName of modelsToTry) {
+    // Googleが「使えるよ！」と言ったモデルを上から順番に片っ端から試していくループ
+    for (const modelName of availableModels) {
+      // 古いモデル（PaLMなど）は除外し、名前に「gemini」が含まれる最新世代のみに絞る
+      if (!modelName.includes('gemini')) continue;
+
       try {
         console.log(`モデル ${modelName} を試行中...`)
         
@@ -90,7 +100,7 @@ ${message}
           }
         )
 
-        // APIからの返答がエラーだった場合は、このループ内の処理を中断してcatchへ飛ぶ
+        // APIからの返答がエラー（429の制限など）だった場合はcatchへ飛ぶ
         if (!generateResponse.ok) {
           const errorText = await generateResponse.text()
           throw new Error(`HTTPエラー: ${generateResponse.status} - ${errorText}`)
@@ -104,7 +114,7 @@ ${message}
 
         // 無事に回答が取得できたら、変数に保存してループを強制終了（成功！）
         answer = generateData.candidates[0].content.parts[0].text
-        console.log(`✨ モデル ${modelName} で回答の生成に成功しました！`)
+        console.log(`✨ モデル ${modelName} で回答の生成に大成功しました！`)
         break 
 
       } catch (error: any) {
