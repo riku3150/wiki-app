@@ -64,8 +64,9 @@ ${contextText}
 ${message}
 `
 
+    // 💡修正ポイント：モデル名を最新の「gemini-2.0-flash」に変更しました
     const generateResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +76,6 @@ ${message}
       }
     )
 
-    // 💡修正ポイント：Googleからの詳しいエラー理由をそのまま投げ返すようにしました
     if (!generateResponse.ok) {
       const errorText = await generateResponse.text()
       console.error('Gemini Generation Error:', errorText)
