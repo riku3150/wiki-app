@@ -34,10 +34,12 @@ export default async function ViewPage({
   }
 
   return (
-    <main className="p-8 max-w-5xl mx-auto">
-      <nav className="mb-8 flex justify-between items-start">
+    /* 修正ポイント: p-8 から p-4 md:p-8 に変更し、スマホでは余白を狭くします */
+    <main className="p-4 md:p-8 max-w-5xl mx-auto">
+      {/* 修正ポイント: flex-col sm:flex-row を指定し、スマホでは縦並び、一定以上の画面幅で横並びにします */}
+      <nav className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-col gap-2">
-          <Link href="/" className="text-blue-600 hover:underline">
+          <Link href="/" className="text-blue-600 hover:underline text-sm md:text-base">
             ← トップへ戻る
           </Link>
           
@@ -48,10 +50,11 @@ export default async function ViewPage({
           )}
         </div>
 
-        <div className="flex gap-4">
+        {/* 修正ポイント: スマホではボタンを押しやすいよう横いっぱいに広げられるようにします */}
+        <div className="flex gap-4 w-full sm:w-auto justify-end">
           <Link 
             href={`/edit/${slug}`} 
-            className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-1 rounded transition"
+            className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2 sm:px-3 sm:py-1 rounded transition text-center flex-1 sm:flex-none font-medium"
           >
             編集
           </Link>
@@ -61,7 +64,8 @@ export default async function ViewPage({
 
       <article>
         <header className="mb-8 border-b border-gray-300 pb-4">
-          <h1 className="text-4xl font-bold mb-3 text-slate-800">{page.title}</h1>
+          {/* 修正ポイント: text-4xl から text-2xl md:text-4xl にし、長いタイトルも break-words で自動折り返しさせます */}
+          <h1 className="text-2xl md:text-4xl font-bold mb-3 text-slate-800 break-words">{page.title}</h1>
           
           {/* タグを安全に表示するための処理 */}
           {page.tags && typeof page.tags === 'string' && (
@@ -74,16 +78,14 @@ export default async function ViewPage({
             </div>
           )}
 
-          <div className="text-sm text-gray-500">
+          {/* 修正ポイント: スマホで文字が重ならないよう flex-wrap を追加します */}
+          <div className="text-sm text-gray-500 flex flex-wrap gap-x-4 gap-y-1">
             <span>更新者: {page.updatedBy}</span>
-            <span className="mx-2">|</span>
+            <span className="hidden sm:inline text-gray-300">|</span>
             <span>最終更新: {page.updatedAt.toLocaleString('ja-JP')}</span>
           </div>
         </header>
 
-        {/* ここがポイントです。Tailwindの装飾は外し、
-          BlockNoteRendererが自分自身で綺麗に表示するのを妨げないようにします。
-        */}
         <div className="min-h-[200px]">
           <BlockNoteRenderer body={page.body} />
         </div>
