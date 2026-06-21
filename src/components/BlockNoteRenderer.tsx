@@ -13,13 +13,10 @@ export default function BlockNoteRenderer({ body }: { body?: string | null }) {
     async function initRenderer() {
       let initialBlocks: PartialBlock[] | undefined = undefined
 
-      // trimを一切使わず、文字が存在する場合だけ処理する最強の安全策
       if (typeof body === 'string' && body.length > 0) {
         try {
-          // JSONとして解析を試みる
           initialBlocks = JSON.parse(body)
         } catch (e) {
-          // 失敗したらHTMLとして解析を試みる
           try {
             const tempEditor = BlockNoteEditor.create()
             initialBlocks = await tempEditor.tryParseHTMLToBlocks(body)
@@ -41,7 +38,7 @@ export default function BlockNoteRenderer({ body }: { body?: string | null }) {
   if (!editor) return <div className="animate-pulse bg-gray-100 h-40 rounded-md" />
 
   return (
-    <div className="-mx-[54px]"> 
+    <div className="-mx-[54px] [&_a]:text-blue-600 [&_a]:underline [&_a]:cursor-pointer hover:[&_a]:text-blue-800"> 
       <BlockNoteView 
         editor={editor} 
         editable={false} 
